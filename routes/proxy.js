@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var URI = require('urijs');
+var iconv = require('iconv-lite');
 var config = require('../config.json');
 
 var API_KEY = config.API_KEY;
