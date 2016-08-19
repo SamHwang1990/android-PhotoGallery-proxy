@@ -20,13 +20,36 @@ router.get('/', function(req, res, next) {
   res.send('welcome to flickr proxy');
 });
 
-router.get('/photos/getRecent/:page', function(req, res, next) {
-  var params = req.params;
-  var page = params.page;
+router.get('/photos/getRecent', function(req, res, next) {
+  var query = req.query;
+  var page = query.page;
 
   var url = restUriBuilder.addQuery({
     method: ['flickr', 'photos', 'getRecent' ].join('.'),
     page: page || 1
+  }).toString();
+
+  var chunks = [];
+  var size = 0;
+  invokeProxy(url, function(response) {
+    response.on('data', function(chunk) {
+      chunks.push(chunk);
+      size += chunk.length;
+    }).on('end', function() {
+      var buf = Buffer.concat(chunks, size);
+      var str = iconv.decode(buf, 'utf-8');
+      res.send(str);
+    });
+  });
+});
+
+router.get('/photos/search', function(req, res, next) {
+  var query = req.query;
+  var text = query.text;
+
+  var url = restUriBuilder.addQuery({
+    method: ['flickr', 'photos', 'search' ].join('.'),
+    text: text
   }).toString();
 
   var chunks = [];
