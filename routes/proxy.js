@@ -6,6 +6,7 @@ var config = require('../config.json');
 
 var API_KEY = config.API_KEY;
 var REST_URL = 'https://api.flickr.com/services/rest';
+var IMG_HTML_URL = 'https://www.flickr.com/photos';
 
 var restUriBuilder = new URI(REST_URL);
 restUriBuilder.search({
@@ -14,6 +15,8 @@ restUriBuilder.search({
   'nojsoncallback': '1',
   'extras': 'url_s'
 });
+
+var imgHtmlUriBuilder = new URI(IMG_HTML_URL);
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -82,6 +85,25 @@ router.get('/photos/fetchUrl', function(req, res, next) {
     }).on('end', function() {
       res.type(response.headers['content-type']);
       res.send(body);
+    });
+  });
+});
+
+router.get('/photos/fetchHtml', function(req, res, next) {
+  var query = req.query;
+  var url = imgHtmlUriBuilder.segment(['photos', query.uid, query.id]).toString();
+
+  var chunks = [];
+  var size = 0;
+  invokeProxy(url, function(response) {
+    response.on('data', function(chunk) {
+      chunks.push(chunk);
+      size += chunk.length;
+    }).on('end', function() {
+      var buf = Buffer.concat(chunks, size);
+      var str = iconv.decode(buf, 'utf-8');
+      res.type(response.headers['content-type']);
+      res.send(str);
     });
   });
 });
